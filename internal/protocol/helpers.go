@@ -5,25 +5,16 @@ import (
 	"errors"
 	"math"
 	"time"
-)
 
-var rateCancels = []string{
-	"free_cancellation",
-	"non_refundable",
-	"pay_at_property",
-	"includes_breakfast",
-	"free_wifi",
-	"no_prepayment",
-	"partial_refund",
-	"instant_confirmation",
-}
+	"github.com/roomzin/roomzin-go/types"
+)
 
 // bitmaskToRateCancelStrings converts 8-bit mask → []string (same logic as Rust)
 func BitmaskToRateCancelStrings(mask uint8) []string {
 	out := make([]string, 0, 8)
 	for i := 0; i < 8; i++ {
 		if mask&(1<<i) != 0 {
-			out = append(out, rateCancels[i])
+			out = append(out, types.RateCancels[i])
 		}
 	}
 	return out

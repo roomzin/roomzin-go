@@ -52,7 +52,8 @@ func GetAcceptableAmenities() []string {
 	return acceptableAmenities[:]
 }
 
-var acceptableRateCancels = [...]string{
+
+var RateCancels = []string{
 	"free_cancellation",
 	"non_refundable",
 	"pay_at_property",
@@ -63,11 +64,12 @@ var acceptableRateCancels = [...]string{
 	"instant_confirmation",
 }
 
+
 func ValidateRateCancels(input []string) (bool, string) {
 	var invalid []string
 	for _, rate := range input {
 		found := false
-		for _, valid := range acceptableRateCancels {
+		for _, valid := range RateCancels {
 			if rate == valid {
 				found = true
 				break
@@ -83,6 +85,6 @@ func ValidateRateCancels(input []string) (bool, string) {
 	return true, ""
 }
 
-func GetAcceptableRateCancels() []string {
-	return acceptableRateCancels[:]
+func GetRateCancels() []string {
+	return RateCancels[:]
 }
