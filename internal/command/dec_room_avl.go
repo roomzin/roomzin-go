@@ -50,5 +50,5 @@ func ParseDecRoomAvlResp(status string, fields []protocol.Field) (uint8, error) 
 		return b[0], nil
 	}
 	msgB := fields[0].Data
-	return 0, fmt.Errorf("set room avl error: %s", string(msgB))
+	return 0, fmt.Errorf("dec room avl error: %s", string(msgB))
 }
