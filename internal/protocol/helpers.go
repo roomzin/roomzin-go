@@ -6,6 +6,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/roomzin/roomzin-go/types"
 )
 
@@ -50,4 +51,15 @@ func MakeU32(v uint32) []byte {
 	b := make([]byte, 4)
 	binary.LittleEndian.PutUint32(b, v)
 	return b
+}
+
+func BytesToPropertyID(data []byte) string {
+	if len(data) == 16 {
+		// Try UUID first, fall back to string
+		if u, err := uuid.FromBytes(data); err == nil {
+			return u.String()
+		}
+	}
+	// Everything else is treated as string
+	return string(data)
 }

@@ -112,7 +112,7 @@ func ParseSearchAvailResp(status string, fields []protocol.Field) ([]types.Prope
 				idx, f.FieldType, f.ID)
 		}
 
-		propID := string(f.Data) // no nested length prefix
+		propID := protocol.BytesToPropertyID(f.Data) // no nested length prefix
 		idx++
 
 		// Each property must have numDays * 4 fields (date, avail, price, rate)

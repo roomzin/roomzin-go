@@ -74,7 +74,7 @@ func ParseSearchPropResp(status string, fields []protocol.Field) ([]string, erro
 		return nil, fmt.Errorf("search prop error: no error message")
 	}
 	ids := make([]string, 0, len(fields))
-	for i := 0; i < len(fields); i++ {
+	for i := range fields {
 		f := fields[i]
 		if f.ID != uint16(i+1) {
 			return nil, fmt.Errorf("invalid field ID %d: expected %d", f.ID, i+1)
@@ -82,7 +82,7 @@ func ParseSearchPropResp(status string, fields []protocol.Field) ([]string, erro
 		if f.FieldType != 0x01 {
 			return nil, fmt.Errorf("invalid field type at ID %d: expected 0x01", f.ID)
 		}
-		ids = append(ids, string(f.Data))
+		ids = append(ids, protocol.BytesToPropertyID(f.Data))
 	}
 	return ids, nil
 }
