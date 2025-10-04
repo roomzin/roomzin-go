@@ -54,21 +54,53 @@ func MakeU32(v uint32) []byte {
 }
 
 func BytesToPropertyID(data []byte) string {
-	// Fast path: exact 16 bytes (no copy needed)
-	if len(data) == 16 {
-		if u, err := uuid.FromBytes(data); err == nil {
+	// 1. Too short → return empty
+	if len(data) < 7 {
+		return ""
+	}
+
+	// 2. Short string marker
+	if data[6] == 0xF0 {
+		// Left segment: 0..5
+		leftLen := 0
+		for i := 0; i < 6; i++ {
+			if i >= len(data) || data[i] == 0 {
+				break
+			}
+			leftLen++
+		}
+
+		// Right segment: 7..15
+		rightLen := 0
+		for i := 7; i < len(data); i++ {
+			if data[i] == 0 {
+				break
+			}
+			rightLen++
+		}
+
+		result := make([]byte, leftLen+rightLen)
+		copy(result[:leftLen], data[:leftLen])
+		copy(result[leftLen:], data[7:7+rightLen])
+		return string(result)
+	}
+
+	// 3. UUID detection (valid version)
+	version := (data[6] & 0xF0) >> 4
+	switch version {
+	case 1, 2, 3, 4, 5, 7:
+		var uuidBytes [16]byte
+		if len(data) >= 16 {
+			copy(uuidBytes[:], data[:16])
+		} else {
+			copy(uuidBytes[:], data) // pad remaining with zeros
+		}
+
+		if u, err := uuid.FromBytes(uuidBytes[:]); err == nil {
 			return u.String()
 		}
 	}
 
-	// Slow path: need padding for <16 bytes
-	if len(data) < 16 {
-		var padded [16]byte
-		copy(padded[:], data)
-		if u, err := uuid.FromBytes(padded[:]); err == nil {
-			return u.String()
-		}
-	}
-
-	return string(data)
+	// This should never happen with proper server data
+	return ""
 }
