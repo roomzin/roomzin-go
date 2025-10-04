@@ -54,12 +54,21 @@ func MakeU32(v uint32) []byte {
 }
 
 func BytesToPropertyID(data []byte) string {
+	// Fast path: exact 16 bytes (no copy needed)
 	if len(data) == 16 {
-		// Try UUID first, fall back to string
 		if u, err := uuid.FromBytes(data); err == nil {
 			return u.String()
 		}
 	}
-	// Everything else is treated as string
+
+	// Slow path: need padding for <16 bytes
+	if len(data) < 16 {
+		var padded [16]byte
+		copy(padded[:], data)
+		if u, err := uuid.FromBytes(padded[:]); err == nil {
+			return u.String()
+		}
+	}
+
 	return string(data)
 }
