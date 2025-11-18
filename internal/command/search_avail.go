@@ -85,7 +85,7 @@ func BuildSearchAvailPayload(p types.SearchAvailPayload) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func ParseSearchAvailResp(status string, fields []protocol.Field) ([]types.PropertyAvail, error) {
+func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol.Field) ([]types.PropertyAvail, error) {
 	if status != "SUCCESS" {
 		if len(fields) > 0 && fields[0].FieldType == 0x01 {
 			return nil, fmt.Errorf("%s", string(fields[0].Data))
@@ -170,7 +170,7 @@ func ParseSearchAvailResp(status string, fields []protocol.Field) ([]types.Prope
 				Date:         dateStr,
 				Availability: availability,
 				FinalPrice:   finalPrice,
-				RateCancel:   protocol.BitmaskToRateCancelStrings(rateCancel),
+				RateCancel:   protocol.BitmaskToRateCancelStrings(codecs, rateCancel),
 			})
 		}
 

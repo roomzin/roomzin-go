@@ -41,11 +41,12 @@ type request struct {
 }
 
 type leaderHandler struct {
-	cfg     *Config
-	reqChan chan *request
-	conn    *connection
-	connMu  sync.RWMutex
-	clrID   uint32
+	cfg         *Config
+	reqChan     chan *request
+	conn        *connection
+	connMu      sync.RWMutex
+	clrID       uint32
+	OnReconnect func()
 }
 
 type followersHandler struct {
@@ -86,6 +87,10 @@ func NewHandler(cfg *Config) *Handler {
 			New: func() any { return &request{} },
 		},
 	}
+}
+
+func (c *Handler) SetOnReconnectCallback(callback func()) {
+	c.leaderHandler.OnReconnect = callback
 }
 
 func (c *Handler) Start(ctx context.Context) {
@@ -352,6 +357,10 @@ func (lh *leaderHandler) LeaderSyncWorker(ctx context.Context) {
 		// first check leader is healthy
 		curConn := lh.getConnection()
 		if curConn == nil || curConn.IsClosed() {
+			// Invalidate codecs via callback
+			if lh.OnReconnect != nil {
+				lh.OnReconnect()
+			}
 			lh.reconnectLeader()
 		}
 

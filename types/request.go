@@ -139,9 +139,9 @@ type SetRoomPkgPayload struct {
 }
 
 // Verify validates the SetRoomPkgPayload.
-func (p SetRoomPkgPayload) Verify() (bool, string) {
+func (p SetRoomPkgPayload) Verify(codecs *Codecs) (bool, string) {
 	validDate, dateErr := ValidateDate(p.Date)
-	validRateCancel, rateCancelErr := ValidateRateCancels(p.RateCancel)
+	validRateCancel, rateCancelErr := ValidateRateCancels(codecs, p.RateCancel)
 
 	var errors []string
 	if !validDate {
@@ -182,9 +182,9 @@ type SearchPropPayload struct {
 }
 
 // Verify validates the SearchPropPayload.
-func (p SearchPropPayload) Verify() (bool, string) {
+func (p SearchPropPayload) Verify(codecs *Codecs) (bool, string) {
 	if p.Amenities != nil {
-		return ValidateAmenities(*p.Amenities)
+		return ValidateAmenities(codecs, *p.Amenities)
 	}
 	return true, ""
 }

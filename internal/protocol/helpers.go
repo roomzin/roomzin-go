@@ -11,11 +11,14 @@ import (
 )
 
 // bitmaskToRateCancelStrings converts 8-bit mask → []string (same logic as Rust)
-func BitmaskToRateCancelStrings(mask uint8) []string {
+func BitmaskToRateCancelStrings(codecs *types.Codecs, mask uint8) []string {
+	if codecs == nil {
+		return []string{}
+	}
 	out := make([]string, 0, 8)
-	for i := 0; i < 8; i++ {
+	for i := range 8 {
 		if mask&(1<<i) != 0 {
-			out = append(out, types.RateCancels[i])
+			out = append(out, codecs.RateCancels[i])
 		}
 	}
 	return out

@@ -3,6 +3,7 @@ package api
 import "github.com/roomzin/roomzin-go/types"
 
 type CacheClientAPI interface {
+	GetCodecs() (*types.Codecs, error)
 	SetProp(p types.SetPropPayload) error
 	SearchProp(p types.SearchPropPayload) ([]string, error)
 	SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail, error)
@@ -21,6 +22,5 @@ type CacheClientAPI interface {
 	DelRoomDay(p types.DelRoomDayRequest) error
 	GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResult, error)
 	GetSegments() ([]types.SegmentInfo, error)
-	SaveSnapshot() error
 	Close() error
 }

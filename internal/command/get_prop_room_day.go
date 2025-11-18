@@ -40,7 +40,7 @@ func BuildGetPropRoomDayPayload(p types.GetRoomDayRequest) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func ParseGetPropRoomDayResp(status string, fields []protocol.Field) (types.GetRoomDayResult, error) {
+func ParseGetPropRoomDayResp(codecs *types.Codecs, status string, fields []protocol.Field) (types.GetRoomDayResult, error) {
 	var res types.GetRoomDayResult
 	if status == "SUCCESS" {
 		chunk := fields[:5]
@@ -49,7 +49,7 @@ func ParseGetPropRoomDayResp(status string, fields []protocol.Field) (types.GetR
 			Date:         string(chunk[1].Data),
 			Availability: chunk[2].Data[0],
 			FinalPrice:   binary.LittleEndian.Uint32(chunk[3].Data),
-			RateCancel:   protocol.BitmaskToRateCancelStrings(chunk[4].Data[0]),
+			RateCancel:   protocol.BitmaskToRateCancelStrings(codecs, chunk[4].Data[0]),
 		}, nil
 	}
 	if len(fields) > 0 && fields[0].FieldType == 0x01 {

@@ -16,6 +16,7 @@ type client struct {
 	cfg     *ClusterConfig
 	ctx     context.Context
 	cancel  context.CancelFunc
+	codecs  *types.Codecs
 }
 
 func New(cfg *ClusterConfig) (api.CacheClientAPI, error) {
@@ -40,12 +41,52 @@ func New(cfg *ClusterConfig) (api.CacheClientAPI, error) {
 	clusterClient := cluster.NewHandler(icfg)
 	clusterClient.Start(ctx)
 
-	return &client{
+	c := &client{
 		handler: clusterClient,
 		cfg:     cfg,
 		ctx:     ctx,
 		cancel:  cancel,
-	}, nil
+	}
+
+	c.handler.SetOnReconnectCallback(func() {
+		c.codecs = nil
+	})
+
+	var err error
+	c.codecs, err = c.fetchCodecs()
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func (c *client) getCodecs() *types.Codecs {
+	if c.codecs != nil {
+		return c.codecs
+	}
+	c.codecs, _ = c.fetchCodecs()
+	return c.codecs
+}
+
+func (c *client) fetchCodecs() (*types.Codecs, error) {
+	req, err := command.BuildGetCodecsPayload()
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
+	defer cancel()
+
+	resp, err := c.handler.Execute(ctx, false, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
+		return nil, errors.New(string(resp.Fields[1].Data))
+	}
+
+	return command.ParseGetCodecsResp(resp.Status, resp.Fields)
 }
 
 func (c *client) Close() error {
@@ -58,6 +99,18 @@ func (c *client) Close() error {
 //	public API
 //
 // --------------------------------------------------
+
+func (c *client) GetCodecs() (*types.Codecs, error) {
+	if c.codecs != nil {
+		return c.codecs, nil
+	}
+	var err error
+	c.codecs, err = c.fetchCodecs()
+	if err != nil {
+		return nil, err
+	}
+	return c.codecs, nil
+}
 
 /* ----------  READ helpers (follower)  ---------- */
 func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
@@ -97,7 +150,7 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 		return nil, errors.New(string(resp.Fields[1].Data))
 	}
 
-	result, err := command.ParseSearchAvailResp(resp.Status, resp.Fields)
+	result, err := command.ParseSearchAvailResp(c.getCodecs(), resp.Status, resp.Fields)
 	return result, err
 }
 
@@ -198,7 +251,7 @@ func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResu
 		return types.GetRoomDayResult{}, errors.New(string(resp.Fields[1].Data))
 	}
 
-	return command.ParseGetPropRoomDayResp(resp.Status, resp.Fields)
+	return command.ParseGetPropRoomDayResp(c.getCodecs(), resp.Status, resp.Fields)
 }
 
 /* ----------  WRITE helpers (leader)  ---------- */
@@ -404,28 +457,6 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 }
 
 /* ----------  MISC  ---------- */
-
-func (c *client) SaveSnapshot() error {
-	// any node can trigger snapshot
-	req, err := command.BuildSaveSnapshotPayload()
-	if err != nil {
-		return err
-	}
-
-	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
-	defer cancel()
-
-	resp, err := c.handler.Execute(ctx, false, req)
-	if err != nil {
-		return err
-	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
-
-	return command.ParseSaveSnapshotResp(resp.Status, resp.Fields)
-}
-
 func (c *client) GetSegments() ([]types.SegmentInfo, error) {
 	req, err := command.BuildGetSegmentsPayload()
 	if err != nil {

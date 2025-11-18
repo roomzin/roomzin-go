@@ -15,6 +15,7 @@ type client struct {
 	cfg     *Config
 	ctx     context.Context
 	cancel  context.CancelFunc
+	codecs  *types.Codecs
 }
 
 func New(cfg *Config) (api.CacheClientAPI, error) {
@@ -38,12 +39,40 @@ func New(cfg *Config) (api.CacheClientAPI, error) {
 		return nil, err
 	}
 
-	return &client{
+	c := &client{
 		handler: singleClient,
 		cfg:     cfg,
 		ctx:     ctx,
 		cancel:  cancel,
-	}, nil
+	}
+
+	c.handler.OnReconnect = func() {
+		c.codecs = nil
+	}
+
+	c.codecs, err = c.fetchCodecs()
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
+}
+
+func (c *client) getCodecs() *types.Codecs {
+	if c.codecs != nil {
+		return c.codecs
+	}
+	c.codecs, _ = c.fetchCodecs()
+	return c.codecs
+}
+
+func (c *client) fetchCodecs() (*types.Codecs, error) {
+	payload, _ := command.BuildGetCodecsPayload()
+	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
+	if err != nil {
+		return nil, errors.New("failed to get codecs list from server")
+	}
+	return command.ParseGetCodecsResp(res.Status, res.Fields)
 }
 
 func (c *client) Close() error {
@@ -56,6 +85,18 @@ func (c *client) Close() error {
 //	public API
 //
 // --------------------------------------------------
+
+func (c *client) GetCodecs() (*types.Codecs, error) {
+	if c.codecs != nil {
+		return c.codecs, nil
+	}
+	var err error
+	c.codecs, err = c.fetchCodecs()
+	if err != nil {
+		return nil, err
+	}
+	return c.codecs, nil
+}
 
 func (c *client) SetProp(p types.SetPropPayload) error {
 	payload, _ := command.BuildSetPropPayload(p)
@@ -81,7 +122,7 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 	if err != nil {
 		return nil, err
 	}
-	return command.ParseSearchAvailResp(res.Status, res.Fields)
+	return command.ParseSearchAvailResp(c.getCodecs(), res.Status, res.Fields)
 }
 
 func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
@@ -207,16 +248,7 @@ func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResu
 	if err != nil {
 		return types.GetRoomDayResult{}, err
 	}
-	return command.ParseGetPropRoomDayResp(res.Status, res.Fields)
-}
-
-func (c *client) SaveSnapshot() error {
-	p, _ := command.BuildSaveSnapshotPayload()
-	res, err := c.handler.RoundTrip(c.handler.NextID(), p)
-	if err != nil {
-		return err
-	}
-	return command.ParseSaveSnapshotResp(res.Status, res.Fields)
+	return command.ParseGetPropRoomDayResp(c.getCodecs(), res.Status, res.Fields)
 }
 
 func (c *client) GetSegments() ([]types.SegmentInfo, error) {

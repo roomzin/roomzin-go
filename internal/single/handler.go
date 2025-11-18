@@ -26,10 +26,11 @@ type Handler struct {
 	conn   net.Conn
 	next   uint32
 
-	mu     sync.Mutex
-	closed bool
-	demux  map[uint32]chan protocol.RawResult
-	ctx    context.Context
+	mu          sync.Mutex
+	closed      bool
+	demux       map[uint32]chan protocol.RawResult
+	ctx         context.Context
+	OnReconnect func()
 }
 
 func NewHandler(cfg *Config, ctx context.Context) (*Handler, error) {
@@ -184,6 +185,10 @@ func (c *Handler) readLoop() {
 		hdr, payload, err := protocol.DrainFrame(c.conn)
 		if err != nil {
 			c.failAll(err)
+			// Connection lost - invalidate codecs
+			if c.OnReconnect != nil {
+				c.OnReconnect() // This sets codecs = nil
+			}
 			return
 		}
 		fields, _ := protocol.ParseFields(payload[1+len(hdr.Status)+2:], hdr.FieldCnt)
