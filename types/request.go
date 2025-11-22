@@ -57,6 +57,13 @@ type LoginPayload struct {
 	Token string // Static token for authentication (optional)
 }
 
+func (p LoginPayload) Verify() (bool, string) {
+	if p.Token == "" {
+		return false, "token is required"
+	}
+	return true, ""
+}
+
 // SetPropPayload defines the payload for adding a new property (ADDPROP command).
 type SetPropPayload struct {
 	Segment      string
@@ -68,6 +75,45 @@ type SetPropPayload struct {
 	Latitude     float64
 	Longitude    float64
 	Amenities    []string
+}
+
+func (p SetPropPayload) Verify(codecs *Codecs) (bool, string) {
+	var errors []string
+
+	if p.Segment == "" {
+		errors = append(errors, "segment is required")
+	}
+	if p.Area == "" {
+		errors = append(errors, "area is required")
+	}
+	if p.PropertyID == "" {
+		errors = append(errors, "propertyID is required")
+	}
+	if p.PropertyType == "" {
+		errors = append(errors, "propertyType is required")
+	}
+	if p.Category == "" {
+		errors = append(errors, "category is required")
+	}
+	if p.Stars > 5 {
+		errors = append(errors, "stars must be between 0 and 5")
+	}
+	if p.Latitude < -90 || p.Latitude > 90 {
+		errors = append(errors, "latitude must be between -90 and 90")
+	}
+	if p.Longitude < -180 || p.Longitude > 180 {
+		errors = append(errors, "longitude must be between -180 and 180")
+	}
+	if len(p.Amenities) > 0 {
+		if ok, err := ValidateAmenities(codecs, p.Amenities); !ok {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return false, strings.Join(errors, "; ")
+	}
+	return true, ""
 }
 
 // PropRoomExistPayload defines the payload for checking if a property has a specific room type (PROPROOMEXIST command).
@@ -123,9 +169,28 @@ type UpdRoomAvlPayload struct {
 	Amount     uint8
 }
 
-// Verify validates the UpdRoomAvlPayload.
 func (p UpdRoomAvlPayload) Verify() (bool, string) {
-	return ValidateDate(p.Date)
+	var errors []string
+
+	if p.PropertyID == "" {
+		errors = append(errors, "propertyID is required")
+	}
+	if p.RoomType == "" {
+		errors = append(errors, "roomType is required")
+	}
+	if p.Amount == 0 {
+		errors = append(errors, "amount must be greater than 0")
+	}
+
+	valid, err := ValidateDate(p.Date)
+	if !valid {
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return false, strings.Join(errors, "; ")
+	}
+	return true, ""
 }
 
 // SetRoomPkgPayload defines the payload for setting room availability, pricing, and cancellation policy (SETROOMPKG command).
@@ -138,17 +203,30 @@ type SetRoomPkgPayload struct {
 	RateCancel   []string // Optional; empty slice if not provided
 }
 
-// Verify validates the SetRoomPkgPayload.
 func (p SetRoomPkgPayload) Verify(codecs *Codecs) (bool, string) {
-	validDate, dateErr := ValidateDate(p.Date)
-	validRateCancel, rateCancelErr := ValidateRateCancels(codecs, p.RateCancel)
-
 	var errors []string
+
+	if p.PropertyID == "" {
+		errors = append(errors, "propertyID is required")
+	}
+	if p.RoomType == "" {
+		errors = append(errors, "roomType is required")
+	}
+
+	validDate, dateErr := ValidateDate(p.Date)
 	if !validDate {
 		errors = append(errors, dateErr)
 	}
-	if !validRateCancel {
-		errors = append(errors, rateCancelErr)
+
+	if p.Availability != nil {
+		errors = append(errors, "availability cannot exceed 255")
+	}
+
+	if len(p.RateCancel) > 0 {
+		ok, err := ValidateRateCancels(codecs, p.RateCancel)
+		if !ok {
+			errors = append(errors, err)
+		}
 	}
 
 	if len(errors) > 0 {
@@ -181,10 +259,29 @@ type SearchPropPayload struct {
 	Limit     *uint64
 }
 
-// Verify validates the SearchPropPayload.
 func (p SearchPropPayload) Verify(codecs *Codecs) (bool, string) {
+	var errors []string
+
+	if p.Segment == "" {
+		errors = append(errors, "segment is required")
+	}
+	if p.Stars != nil && *p.Stars > 5 {
+		errors = append(errors, "stars must be 0–5")
+	}
+	if p.Latitude != nil && (*p.Latitude < -90 || *p.Latitude > 90) {
+		errors = append(errors, "latitude must be between -90 and 90")
+	}
+	if p.Longitude != nil && (*p.Longitude < -180 || *p.Longitude > 180) {
+		errors = append(errors, "longitude must be between -180 and 180")
+	}
 	if p.Amenities != nil {
-		return ValidateAmenities(codecs, *p.Amenities)
+		if ok, err := ValidateAmenities(codecs, *p.Amenities); !ok {
+			errors = append(errors, err)
+		}
+	}
+
+	if len(errors) > 0 {
+		return false, strings.Join(errors, "; ")
 	}
 	return true, ""
 }
@@ -207,13 +304,56 @@ type SearchAvailPayload struct {
 	Limit        *uint64
 }
 
+func (p SearchAvailPayload) Verify(codecs *Codecs) (bool, string) {
+	var errors []string
+
+	if p.Segment == "" {
+		errors = append(errors, "segment is required")
+	}
+	if p.RoomType == "" {
+		errors = append(errors, "roomType is required")
+	}
+	if p.Latitude != nil {
+		if *p.Latitude < -90 || *p.Latitude > 90 {
+			errors = append(errors, "latitude must be between -90 and 90")
+		}
+	}
+	if p.Longitude != nil {
+		if *p.Longitude < -180 || *p.Longitude > 180 {
+			errors = append(errors, "longitude must be between -180 and 180")
+		}
+	}
+	if len(p.Date) == 0 {
+		errors = append(errors, "at least one date is required")
+	} else {
+		if ok, err := ValidateDates(p.Date); !ok {
+			errors = append(errors, err)
+		}
+	}
+	if len(p.RateCancel) > 0 {
+		if ok, err := ValidateRateCancels(codecs, p.RateCancel); !ok {
+			errors = append(errors, err)
+		}
+	}
+	if p.Limit != nil && *p.Limit == 0 {
+		errors = append(errors, "limit must be greater than 0")
+	}
+
+	if len(errors) > 0 {
+		return false, strings.Join(errors, "; ")
+	}
+	return true, ""
+}
+
 // DelPropDayRequest defines the payload for deleting all room data for a property on a specific date (DELPROPDAY command).
 type DelPropDayRequest struct {
 	PropertyID string
 	Date       string // YYYY-MM-DD
 }
 
-// Verify validates the DelPropDayRequest.
 func (p DelPropDayRequest) Verify() (bool, string) {
+	if p.PropertyID == "" {
+		return false, "propertyID is required"
+	}
 	return ValidateDate(p.Date)
 }
