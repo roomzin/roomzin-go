@@ -218,10 +218,6 @@ func (p SetRoomPkgPayload) Verify(codecs *Codecs) (bool, string) {
 		errors = append(errors, dateErr)
 	}
 
-	if p.Availability != nil {
-		errors = append(errors, "availability cannot exceed 255")
-	}
-
 	if len(p.RateCancel) > 0 {
 		ok, err := ValidateRateCancels(codecs, p.RateCancel)
 		if !ok {
