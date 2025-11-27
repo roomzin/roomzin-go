@@ -519,7 +519,7 @@ func (c *client) GetSegments() ([]types.SegmentInfo, error) {
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
 	defer cancel()
 
-	resp, err := c.handler.Execute(ctx, true, req)
+	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
 		return nil, err
 	}
