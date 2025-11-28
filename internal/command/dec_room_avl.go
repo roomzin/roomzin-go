@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 
 	"github.com/roomzin/roomzin-go/types"
 
@@ -45,10 +44,12 @@ func ParseDecRoomAvlResp(status string, fields []protocol.Field) (uint8, error) 
 	if status == "SUCCESS" {
 		b := fields[0].Data
 		if len(b) != 1 {
-			return 0, errors.New("missing or invalid scalar value")
+			return 0, errors.New("RESPONSE_ERROR: missing or invalid scalar value")
 		}
 		return b[0], nil
 	}
-	msgB := fields[0].Data
-	return 0, fmt.Errorf("dec room avl error: %s", string(msgB))
+	if len(fields) > 0 && fields[0].FieldType == 0x01 {
+		return 0, errors.New(string(fields[0].Data))
+	}
+	return 0, errors.New("RESPONSE_ERROR")
 }

@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -90,12 +91,12 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 		if len(fields) > 0 && fields[0].FieldType == 0x01 {
 			return nil, fmt.Errorf("%s", string(fields[0].Data))
 		}
-		return nil, fmt.Errorf("search failed with status=%s", status)
+		return nil, errors.New("RESPONSE_ERROR")
 	}
 
 	numDaysField := fields[0]
 	if numDaysField.ID != 1 || numDaysField.FieldType != 0x02 || len(numDaysField.Data) != 2 {
-		return nil, fmt.Errorf("expected num_days field (id=1, type=0x02, len=2)")
+		return nil, fmt.Errorf("RESPONSE_ERROR: expected num_days field (id=1, type=0x02, len=2)")
 	}
 	numDays := binary.LittleEndian.Uint16(numDaysField.Data)
 
@@ -106,7 +107,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 		f := fields[idx]
 
 		if f.FieldType != 0x01 {
-			return nil, fmt.Errorf("expected property field at index=%d, got type=0x%02x id=%d",
+			return nil, fmt.Errorf("RESPONSE_ERROR: expected property field at index=%d, got type=0x%02x id=%d",
 				idx, f.FieldType, f.ID)
 		}
 
@@ -114,30 +115,30 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 		idx++
 
 		if idx >= len(fields) {
-			return nil, fmt.Errorf("property %q missing days data", propID)
+			return nil, fmt.Errorf("RESPONSE_ERROR: property %q missing days data", propID)
 		}
 
 		daysField := fields[idx]
 		if daysField.FieldType != 0x08 {
-			return nil, fmt.Errorf("expected days vector field for property %q, got type=0x%02x",
+			return nil, fmt.Errorf("RESPONSE_ERROR: expected days vector field for property %q, got type=0x%02x",
 				propID, daysField.FieldType)
 		}
 		idx++
 
 		data := daysField.Data
 		if len(data) < 2 {
-			return nil, fmt.Errorf("property %q days vector too short", propID)
+			return nil, fmt.Errorf("RESPONSE_ERROR: property %q days vector too short", propID)
 		}
 
 		daysCount := binary.LittleEndian.Uint16(data[0:2])
 		if daysCount != numDays {
-			return nil, fmt.Errorf("property %q days count mismatch: expected %d, got %d",
+			return nil, fmt.Errorf("RESPONSE_ERROR: property %q days count mismatch: expected %d, got %d",
 				propID, numDays, daysCount)
 		}
 
 		expectedDataLen := 2 + (8 * int(daysCount))
 		if len(data) != expectedDataLen {
-			return nil, fmt.Errorf("property %q days vector length mismatch: expected %d, got %d",
+			return nil, fmt.Errorf("RESPONSE_ERROR: property %q days vector length mismatch: expected %d, got %d",
 				propID, expectedDataLen, len(data))
 		}
 
@@ -146,7 +147,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 
 		for d := 0; d < int(daysCount); d++ {
 			if dataCursor+8 > len(data) {
-				return nil, fmt.Errorf("property %q day %d data truncated", propID, d)
+				return nil, fmt.Errorf("RESPONSE_ERROR: property %q day %d data truncated", propID, d)
 			}
 
 			datePacked := binary.LittleEndian.Uint16(data[dataCursor : dataCursor+2])
@@ -163,7 +164,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 
 			dateStr, err := protocol.U16ToDate(datePacked)
 			if err != nil {
-				return nil, fmt.Errorf("invalid date for property=%q: %w", propID, err)
+				return nil, fmt.Errorf("RESPONSE_ERROR: invalid date for property=%q: %w", propID, err)
 			}
 
 			days = append(days, types.DayAvail{
@@ -181,7 +182,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 	}
 
 	if idx != len(fields) {
-		return nil, fmt.Errorf("extra fields after parsing: consumed=%d total=%d",
+		return nil, fmt.Errorf("RESPONSE_ERROR: extra fields after parsing: consumed=%d total=%d",
 			idx, len(fields))
 	}
 

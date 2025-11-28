@@ -35,5 +35,5 @@ func ParseDelPropResp(status string, fields []protocol.Field) error {
 	if len(fields) > 0 && fields[0].FieldType == 0x01 {
 		return errors.New(string(fields[0].Data))
 	}
-	return errors.New("")
+	return errors.New("RESPONSE_ERROR")
 }

@@ -27,12 +27,12 @@ func ParseGetSegmentsResp(status string, fields []protocol.Field) ([]types.Segme
 		if len(fields) > 0 && fields[0].FieldType == 0x01 {
 			return nil, fmt.Errorf("%s", string(fields[0].Data))
 		}
-		return nil, fmt.Errorf("unknown error")
+		return nil, fmt.Errorf("RESPONSE_ERROR")
 	}
 
 	// Fields should come in pairs: segment string followed by propCount u32
 	if len(fields)%2 != 0 {
-		return nil, fmt.Errorf("invalid field count: expected pairs of segment and propCount")
+		return nil, fmt.Errorf("RESPONSE_ERROR: invalid field count: expected pairs of segment and propCount")
 	}
 
 	list := make([]types.SegmentInfo, 0, len(fields)/2)
@@ -40,19 +40,19 @@ func ParseGetSegmentsResp(status string, fields []protocol.Field) ([]types.Segme
 	for i := 0; i < len(fields); i += 2 {
 		// First field should be segment (string type 0x01)
 		if fields[i].FieldType != 0x01 {
-			return nil, fmt.Errorf("expected string segment at field %d, got type %d", i, fields[i].FieldType)
+			return nil, fmt.Errorf("RESPONSE_ERROR: expected string segment at field %d, got type %d", i, fields[i].FieldType)
 		}
 		segment := string(fields[i].Data)
 
 		// Second field should be propCount (u32 type 0x03)
 		if i+1 >= len(fields) {
-			return nil, fmt.Errorf("missing propCount field for segment %s", segment)
+			return nil, fmt.Errorf("RESPONSE_ERROR: missing propCount field for segment %s", segment)
 		}
 		if fields[i+1].FieldType != 0x03 {
-			return nil, fmt.Errorf("expected u32 propCount at field %d, got type %d", i+1, fields[i+1].FieldType)
+			return nil, fmt.Errorf("RESPONSE_ERROR: expected u32 propCount at field %d, got type %d", i+1, fields[i+1].FieldType)
 		}
 		if len(fields[i+1].Data) != 4 {
-			return nil, fmt.Errorf("invalid propCount length: expected 4 bytes, got %d", len(fields[i+1].Data))
+			return nil, fmt.Errorf("RESPONSE_ERROR: invalid propCount length: expected 4 bytes, got %d", len(fields[i+1].Data))
 		}
 
 		propCount := binary.LittleEndian.Uint32(fields[i+1].Data)

@@ -55,5 +55,5 @@ func ParseSetPropResp(status string, fields []protocol.Field) error {
 	if status == "SUCCESS" {
 		return nil
 	}
-	return fmt.Errorf("set prop error: %s", string(fields[0].Data))
+	return fmt.Errorf("%s", string(fields[0].Data))
 }

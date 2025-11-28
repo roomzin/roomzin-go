@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/roomzin/roomzin-go/types"
@@ -67,6 +66,8 @@ func ParseSetRoomPkgResp(status string, fields []protocol.Field) error {
 	if status == "SUCCESS" {
 		return nil
 	}
-	msgB := fields[0].Data
-	return fmt.Errorf("set room package error: %s", string(msgB))
+	if len(fields) > 0 && fields[0].FieldType == 0x01 {
+		return errors.New(string(fields[0].Data))
+	}
+	return errors.New("RESPONSE_ERROR")
 }

@@ -55,5 +55,5 @@ func ParseGetPropRoomDayResp(codecs *types.Codecs, status string, fields []proto
 	if len(fields) > 0 && fields[0].FieldType == 0x01 {
 		return res, errors.New(string(fields[0].Data))
 	}
-	return res, errors.New("")
+	return res, errors.New("RESPONSE_ERROR")
 }

@@ -32,5 +32,5 @@ func ParsePropExistResp(status string, fields []protocol.Field) (bool, error) {
 		return fields[0].Data[0] == 1, nil
 	}
 	// only this path is an error
-	return false, fmt.Errorf("prop exist error: %s", string(fields[0].Data))
+	return false, fmt.Errorf("%s", string(fields[0].Data))
 }

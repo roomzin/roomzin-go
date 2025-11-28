@@ -33,7 +33,7 @@ func ParsePropRoomListResp(status string, fields []protocol.Field) ([]string, er
 		if len(fields) > 0 && fields[0].FieldType == 0x01 {
 			return nil, fmt.Errorf("%s", string(fields[0].Data))
 		}
-		return nil, fmt.Errorf("")
+		return nil, fmt.Errorf("RESPONSE_ERROR")
 	}
 	list := make([]string, 0, len(fields))
 	for i := range fields {

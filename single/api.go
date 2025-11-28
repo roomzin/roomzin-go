@@ -102,7 +102,7 @@ func (c *client) GetCodecs() (*types.Codecs, error) {
 
 func (c *client) SetProp(p types.SetPropPayload) error {
 	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return fmt.Errorf("invalid SetProp payload: %s", errMsg)
+		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildSetPropPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -114,7 +114,7 @@ func (c *client) SetProp(p types.SetPropPayload) error {
 
 func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return nil, fmt.Errorf("invalid SearchProp payload: %s", errMsg)
+		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildSearchPropPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -126,7 +126,7 @@ func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 
 func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail, error) {
 	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return nil, fmt.Errorf("invalid SearchAvail payload: %s", errMsg)
+		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildSearchAvailPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -138,7 +138,7 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 
 func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return fmt.Errorf("invalid SetRoomPkg payload: %s", errMsg)
+		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildSetRoomPkgPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -150,7 +150,7 @@ func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 
 func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("invalid SetRoomAvl payload: %s", errMsg)
+		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildSetRoomAvlPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -162,7 +162,7 @@ func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("invalid IncRoomAvl payload: %s", errMsg)
+		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildIncRoomAvlPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -174,7 +174,7 @@ func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("invalid DecRoomAvl payload: %s", errMsg)
+		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildDecRoomAvlPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -186,7 +186,7 @@ func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 func (c *client) PropExist(propertyID string) (bool, error) {
 	if strings.TrimSpace(propertyID) == "" {
-		return false, fmt.Errorf("propertyID is required")
+		return false, fmt.Errorf("VALIDATION_ERROR: propertyID is required")
 	}
 	payload, _ := command.BuildPropExistPayload(propertyID)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -198,7 +198,7 @@ func (c *client) PropExist(propertyID string) (bool, error) {
 
 func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
 	if ok, errMsg := p.Verify(); !ok {
-		return false, fmt.Errorf("invalid PropRoomExist payload: %s", errMsg)
+		return false, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildPropRoomExistPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -210,7 +210,7 @@ func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
 
 func (c *client) PropRoomList(propertyID string) ([]string, error) {
 	if strings.TrimSpace(propertyID) == "" {
-		return nil, fmt.Errorf("propertyID is required")
+		return nil, fmt.Errorf("VALIDATION_ERROR: propertyID is required")
 	}
 	payload, _ := command.BuildPropRoomListPayload(propertyID)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -222,7 +222,7 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 
 func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, error) {
 	if ok, errMsg := p.Verify(); !ok {
-		return nil, fmt.Errorf("invalid PropRoomDateList payload: %s", errMsg)
+		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildPropRoomDateListPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -234,7 +234,7 @@ func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, er
 
 func (c *client) DelProp(propertyID string) error {
 	if strings.TrimSpace(propertyID) == "" {
-		return fmt.Errorf("propertyID is required")
+		return fmt.Errorf("VALIDATION_ERROR: propertyID is required")
 	}
 	payload, _ := command.BuildDelPropPayload(propertyID)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -246,7 +246,7 @@ func (c *client) DelProp(propertyID string) error {
 
 func (c *client) DelSegment(segment string) error {
 	if strings.TrimSpace(segment) == "" {
-		return fmt.Errorf("segment is required")
+		return fmt.Errorf("VALIDATION_ERROR: segment is required")
 	}
 	payload, _ := command.BuildDelSegmentPayload(segment)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -258,7 +258,7 @@ func (c *client) DelSegment(segment string) error {
 
 func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("invalid DelPropDay payload: %s", errMsg)
+		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildDelPropDayPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -270,7 +270,7 @@ func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 
 func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("invalid DelPropRoom payload: %s", errMsg)
+		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildDelPropRoomPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -282,7 +282,7 @@ func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 
 func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("invalid DelRoomDay payload: %s", errMsg)
+		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildDelRoomDayPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -294,7 +294,7 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 
 func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResult, error) {
 	if ok, errMsg := p.Verify(); !ok {
-		return types.GetRoomDayResult{}, fmt.Errorf("invalid GetPropRoomDay payload: %s", errMsg)
+		return types.GetRoomDayResult{}, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
 	}
 	payload, _ := command.BuildGetPropRoomDayPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)

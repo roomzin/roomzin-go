@@ -81,7 +81,7 @@ func dial(addr string, token string, timeout, keepAlive time.Duration) (*net.TCP
 
 	// check authentication
 	if err := handshake(tcpConn, token, timeout); err != nil {
-		return nil, fmt.Errorf("failed to handshake to %s: %v", addr, err)
+		return nil, fmt.Errorf("%v, failed to handshake to %s", err, addr)
 	}
 
 	tcpConn.SetKeepAlive(true)
@@ -110,9 +110,9 @@ func handshake(conn *net.TCPConn, token string, timeout time.Duration) error {
 	case "LOGIN OK":
 		return nil
 	case "LOGIN FAILED":
-		return errors.New("login failed: invalid token")
+		return errors.New("AUTH_ERROR: invalid token")
 	default:
-		return fmt.Errorf("unexpected login reply: %q", buf[:n])
+		return fmt.Errorf("RESPONSE_ERROR: unexpected login reply %q", buf[:n])
 	}
 }
 

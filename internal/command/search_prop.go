@@ -69,18 +69,18 @@ func BuildSearchPropPayload(p types.SearchPropPayload) ([]byte, error) {
 func ParseSearchPropResp(status string, fields []protocol.Field) ([]string, error) {
 	if status != "SUCCESS" {
 		if len(fields) > 0 && fields[0].ID == 0x01 && fields[0].FieldType == 0x01 {
-			return nil, fmt.Errorf("search prop error: %s", string(fields[0].Data))
+			return nil, fmt.Errorf("%s", string(fields[0].Data))
 		}
-		return nil, fmt.Errorf("search prop error: no error message")
+		return nil, fmt.Errorf("RESPONSE_ERROR")
 	}
 	ids := make([]string, 0, len(fields))
 	for i := range fields {
 		f := fields[i]
 		if f.ID != uint16(i+1) {
-			return nil, fmt.Errorf("invalid field ID %d: expected %d", f.ID, i+1)
+			return nil, fmt.Errorf("RESPONSE_ERROR: invalid field ID %d: expected %d", f.ID, i+1)
 		}
 		if f.FieldType != 0x01 {
-			return nil, fmt.Errorf("invalid field type at ID %d: expected 0x01", f.ID)
+			return nil, fmt.Errorf("RESPONSE_ERROR: invalid field type at ID %d: expected 0x01", f.ID)
 		}
 		ids = append(ids, protocol.BytesToPropertyID(f.Data))
 	}

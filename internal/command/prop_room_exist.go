@@ -3,12 +3,11 @@ package command
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 
 	"github.com/roomzin/roomzin-go/types"
 
 	"github.com/roomzin/roomzin-go/internal/protocol"
-
-	"errors"
 )
 
 func BuildPropRoomExistPayload(p types.PropRoomExistPayload) ([]byte, error) {
@@ -43,5 +42,8 @@ func ParsePropRoomExistResp(status string, fields []protocol.Field) (bool, error
 	if status == "SUCCESS" {
 		return fields[0].Data[0] == 1, nil
 	}
-	return false, errors.New("room does not exist")
+	if len(fields) > 0 && fields[0].FieldType == 0x01 {
+		return false, fmt.Errorf("%s", string(fields[0].Data))
+	}
+	return false, fmt.Errorf("RESPONSE_ERROR")
 }
