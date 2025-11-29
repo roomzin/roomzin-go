@@ -598,6 +598,10 @@ func (c *Handler) Execute(ctx context.Context, isWrite bool, payload []byte) (pr
 		return protocol.RawResult{}, errors.New("payload should not be empty")
 	}
 
+	if isWrite && c.leaderHandler.getConnection() == nil {
+		return protocol.RawResult{}, errors.New("cluster has no leader")
+	}
+
 	reqAny := c.reqPool.Get()
 	if reqAny == nil {
 		return protocol.RawResult{}, errors.New("failed to get request from pool")
@@ -666,11 +670,11 @@ func (c *Handler) Execute(ctx context.Context, isWrite bool, payload []byte) (pr
 			case "503", "429": // unavailable / busy
 				backoff = true
 			default:
-				return res, errors.New("max retries reached after " + errMsg)
+				return res, nil
 			}
 
 			if attempts >= maxRetries {
-				return res, errors.New("max retries reached after " + errMsg)
+				return res, nil
 			}
 			attempts++
 
@@ -685,7 +689,7 @@ func (c *Handler) Execute(ctx context.Context, isWrite bool, payload []byte) (pr
 
 			req.clrID = 0
 			if err := send(); err != nil {
-				return res, errors.New("retry failed after " + errMsg + ": " + err.Error())
+				return res, nil
 			}
 		}
 	}
