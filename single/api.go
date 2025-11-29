@@ -72,7 +72,7 @@ func (c *client) fetchCodecs() (*types.Codecs, error) {
 	payload, _ := command.BuildGetCodecsPayload()
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
 	if err != nil {
-		return nil, errors.New("failed to get codecs list from server")
+		return nil, err
 	}
 	return command.ParseGetCodecsResp(res.Status, res.Fields)
 }
