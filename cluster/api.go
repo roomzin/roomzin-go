@@ -84,9 +84,6 @@ func (c *client) fetchCodecs() (*types.Codecs, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return nil, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseGetCodecsResp(resp.Status, resp.Fields)
 }
@@ -116,8 +113,8 @@ func (c *client) GetCodecs() (*types.Codecs, error) {
 
 /* ----------  READ helpers (follower)  ---------- */
 func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return nil, err
 	}
 	req, err := command.BuildSearchPropPayload(p)
 	if err != nil {
@@ -131,16 +128,13 @@ func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return nil, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseSearchPropResp(resp.Status, resp.Fields)
 }
 
 func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail, error) {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return nil, err
 	}
 	req, err := command.BuildSearchAvailPayload(p)
 	if err != nil {
@@ -153,9 +147,6 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
 		return nil, err
-	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return nil, errors.New(string(resp.Fields[1].Data))
 	}
 
 	result, err := command.ParseSearchAvailResp(c.getCodecs(), resp.Status, resp.Fields)
@@ -178,16 +169,13 @@ func (c *client) PropExist(propertyID string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return false, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParsePropExistResp(resp.Status, resp.Fields)
 }
 
 func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return false, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return false, err
 	}
 	req, err := command.BuildPropRoomExistPayload(p)
 	if err != nil {
@@ -200,9 +188,6 @@ func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
 		return false, err
-	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return false, errors.New(string(resp.Fields[1].Data))
 	}
 
 	return command.ParsePropRoomExistResp(resp.Status, resp.Fields)
@@ -224,16 +209,13 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return nil, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParsePropRoomListResp(resp.Status, resp.Fields)
 }
 
 func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return nil, err
 	}
 	req, err := command.BuildPropRoomDateListPayload(p)
 	if err != nil {
@@ -247,16 +229,13 @@ func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, er
 	if err != nil {
 		return nil, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return nil, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParsePropRoomDateListResp(resp.Status, resp.Fields)
 }
 
 func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResult, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return types.GetRoomDayResult{}, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return types.GetRoomDayResult{}, err
 	}
 	req, err := command.BuildGetPropRoomDayPayload(p)
 	if err != nil {
@@ -270,9 +249,6 @@ func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResu
 	if err != nil {
 		return types.GetRoomDayResult{}, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return types.GetRoomDayResult{}, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseGetPropRoomDayResp(c.getCodecs(), resp.Status, resp.Fields)
 }
@@ -280,8 +256,8 @@ func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResu
 /* ----------  WRITE helpers (leader)  ---------- */
 
 func (c *client) SetProp(p types.SetPropPayload) error {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return err
 	}
 	req, err := command.BuildSetPropPayload(p)
 	if err != nil {
@@ -295,16 +271,13 @@ func (c *client) SetProp(p types.SetPropPayload) error {
 	if err != nil {
 		return err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseSetPropResp(resp.Status, resp.Fields)
 }
 
 func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return err
 	}
 	req, err := command.BuildSetRoomPkgPayload(p)
 	if err != nil {
@@ -318,16 +291,13 @@ func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 	if err != nil {
 		return err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseSetRoomPkgResp(resp.Status, resp.Fields)
 }
 
 func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return 0, err
 	}
 	req, err := command.BuildSetRoomAvlPayload(p)
 	if err != nil {
@@ -341,16 +311,13 @@ func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if err != nil {
 		return 0, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return 0, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseSetRoomAvlResp(resp.Status, resp.Fields)
 }
 
 func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return 0, err
 	}
 	req, err := command.BuildIncRoomAvlPayload(p)
 	if err != nil {
@@ -364,16 +331,13 @@ func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if err != nil {
 		return 0, err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return 0, errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseIncRoomAvlResp(resp.Status, resp.Fields)
 }
 
 func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return 0, err
 	}
 	req, err := command.BuildDecRoomAvlPayload(p)
 	if err != nil {
@@ -386,9 +350,6 @@ func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
 		return 0, err
-	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return 0, errors.New(string(resp.Fields[1].Data))
 	}
 
 	return command.ParseDecRoomAvlResp(resp.Status, resp.Fields)
@@ -410,9 +371,6 @@ func (c *client) DelProp(propertyID string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseDelPropResp(resp.Status, resp.Fields)
 }
@@ -433,16 +391,13 @@ func (c *client) DelSegment(segment string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseDelSegmentResp(resp.Status, resp.Fields)
 }
 
 func (c *client) DelPropDay(p types.DelPropDayRequest) error {
-	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return err
 	}
 	req, err := command.BuildDelPropDayPayload(p)
 	if err != nil {
@@ -456,16 +411,13 @@ func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 	if err != nil {
 		return err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseDelPropDayResp(resp.Status, resp.Fields)
 }
 
 func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
-	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return err
 	}
 	req, err := command.BuildDelPropRoomPayload(p)
 	if err != nil {
@@ -479,16 +431,13 @@ func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 	if err != nil {
 		return err
 	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
-	}
 
 	return command.ParseDelPropRoomResp(resp.Status, resp.Fields)
 }
 
 func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
-	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return err
 	}
 	req, err := command.BuildDelRoomDayPayload(p)
 	if err != nil {
@@ -501,9 +450,6 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
 		return err
-	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return errors.New(string(resp.Fields[1].Data))
 	}
 
 	return command.ParseDelRoomDayResp(resp.Status, resp.Fields)
@@ -522,9 +468,6 @@ func (c *client) GetSegments() ([]types.SegmentInfo, error) {
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
 		return nil, err
-	}
-	if resp.Status == "ERROR" && len(resp.Fields) > 0 {
-		return nil, errors.New(string(resp.Fields[1].Data))
 	}
 
 	return command.ParseGetSegmentsResp(resp.Status, resp.Fields)

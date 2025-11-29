@@ -101,8 +101,8 @@ func (c *client) GetCodecs() (*types.Codecs, error) {
 }
 
 func (c *client) SetProp(p types.SetPropPayload) error {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return err
 	}
 	payload, _ := command.BuildSetPropPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -113,8 +113,8 @@ func (c *client) SetProp(p types.SetPropPayload) error {
 }
 
 func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return nil, err
 	}
 	payload, _ := command.BuildSearchPropPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -125,8 +125,8 @@ func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 }
 
 func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail, error) {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return nil, err
 	}
 	payload, _ := command.BuildSearchAvailPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -137,8 +137,8 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 }
 
 func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
-	if ok, errMsg := p.Verify(c.getCodecs()); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(c.getCodecs()); err != nil {
+		return err
 	}
 	payload, _ := command.BuildSetRoomPkgPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -149,8 +149,8 @@ func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 }
 
 func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return 0, err
 	}
 	payload, _ := command.BuildSetRoomAvlPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -161,8 +161,8 @@ func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 }
 
 func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return 0, err
 	}
 	payload, _ := command.BuildIncRoomAvlPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -173,8 +173,8 @@ func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 }
 
 func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return 0, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return 0, err
 	}
 	payload, _ := command.BuildDecRoomAvlPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -197,8 +197,8 @@ func (c *client) PropExist(propertyID string) (bool, error) {
 }
 
 func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return false, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return false, err
 	}
 	payload, _ := command.BuildPropRoomExistPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -221,8 +221,8 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 }
 
 func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return nil, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return nil, err
 	}
 	payload, _ := command.BuildPropRoomDateListPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -257,8 +257,8 @@ func (c *client) DelSegment(segment string) error {
 }
 
 func (c *client) DelPropDay(p types.DelPropDayRequest) error {
-	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return err
 	}
 	payload, _ := command.BuildDelPropDayPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -269,8 +269,8 @@ func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 }
 
 func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
-	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return err
 	}
 	payload, _ := command.BuildDelPropRoomPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -281,8 +281,8 @@ func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 }
 
 func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
-	if ok, errMsg := p.Verify(); !ok {
-		return fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return err
 	}
 	payload, _ := command.BuildDelRoomDayPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)
@@ -293,8 +293,8 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 }
 
 func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResult, error) {
-	if ok, errMsg := p.Verify(); !ok {
-		return types.GetRoomDayResult{}, fmt.Errorf("VALIDATION_ERROR: %s", errMsg)
+	if err := p.Verify(); err != nil {
+		return types.GetRoomDayResult{}, err
 	}
 	payload, _ := command.BuildGetPropRoomDayPayload(p)
 	res, err := c.handler.RoundTrip(c.handler.NextID(), payload)

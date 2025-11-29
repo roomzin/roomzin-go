@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -11,7 +12,7 @@ type Codecs struct {
 	RateCancels []string `yaml:"rate_cancels"`
 }
 
-func ValidateAmenities(codecs *Codecs, input []string) (bool, string) {
+func ValidateAmenities(codecs *Codecs, input []string) error {
 	var invalid []string
 	for _, amenity := range input {
 		found := false
@@ -26,12 +27,12 @@ func ValidateAmenities(codecs *Codecs, input []string) (bool, string) {
 		}
 	}
 	if len(invalid) > 0 {
-		return false, "Invalid amenities: " + strings.Join(invalid, ", ")
+		return errors.New("Invalid amenities: " + strings.Join(invalid, ", "))
 	}
-	return true, ""
+	return nil
 }
 
-func ValidateRateCancels(codecs *Codecs, input []string) (bool, string) {
+func ValidateRateCancels(codecs *Codecs, input []string) error {
 	var invalid []string
 	for _, rate := range input {
 		found := false
@@ -46,7 +47,7 @@ func ValidateRateCancels(codecs *Codecs, input []string) (bool, string) {
 		}
 	}
 	if len(invalid) > 0 {
-		return false, "Invalid rate cancels: " + strings.Join(invalid, ", ")
+		return errors.New("Invalid rate cancels: " + strings.Join(invalid, ", "))
 	}
-	return true, ""
+	return nil
 }
