@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -84,7 +83,11 @@ func (c *client) fetchCodecs() (*types.Codecs, error) {
 		return nil, types.RzError(err)
 	}
 
-	return command.ParseGetCodecsResp(resp.Status, resp.Fields)
+	result, err := command.ParseGetCodecsResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) Close() error {
@@ -128,7 +131,11 @@ func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 		return nil, types.RzError(err)
 	}
 
-	return command.ParseSearchPropResp(resp.Status, resp.Fields)
+	result, err := command.ParseSearchPropResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail, error) {
@@ -149,12 +156,15 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 	}
 
 	result, err := command.ParseSearchAvailResp(c.getCodecs(), resp.Status, resp.Fields)
-	return result, err
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) PropExist(propertyID string) (bool, error) {
 	if strings.TrimSpace(propertyID) == "" {
-		return false, fmt.Errorf("VALIDATION_ERROR: propertyID is required")
+		return false, types.RzError("VALIDATION_ERROR: propertyID is required")
 	}
 	req, err := command.BuildPropExistPayload(propertyID)
 	if err != nil {
@@ -169,7 +179,11 @@ func (c *client) PropExist(propertyID string) (bool, error) {
 		return false, err
 	}
 
-	return command.ParsePropExistResp(resp.Status, resp.Fields)
+	result, err := command.ParsePropExistResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
@@ -189,12 +203,16 @@ func (c *client) PropRoomExist(p types.PropRoomExistPayload) (bool, error) {
 		return false, err
 	}
 
-	return command.ParsePropRoomExistResp(resp.Status, resp.Fields)
+	result, err := command.ParsePropRoomExistResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) PropRoomList(propertyID string) ([]string, error) {
 	if strings.TrimSpace(propertyID) == "" {
-		return nil, fmt.Errorf("VALIDATION_ERROR: propertyID is required")
+		return nil, types.RzError("VALIDATION_ERROR: propertyID is required")
 	}
 	req, err := command.BuildPropRoomListPayload(propertyID)
 	if err != nil {
@@ -209,7 +227,11 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 		return nil, types.RzError(err)
 	}
 
-	return command.ParsePropRoomListResp(resp.Status, resp.Fields)
+	result, err := command.ParsePropRoomListResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, error) {
@@ -229,7 +251,11 @@ func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, er
 		return nil, types.RzError(err)
 	}
 
-	return command.ParsePropRoomDateListResp(resp.Status, resp.Fields)
+	result, err := command.ParsePropRoomDateListResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResult, error) {
@@ -249,7 +275,11 @@ func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResu
 		return types.GetRoomDayResult{}, err
 	}
 
-	return command.ParseGetPropRoomDayResp(c.getCodecs(), resp.Status, resp.Fields)
+	result, err := command.ParseGetPropRoomDayResp(c.getCodecs(), resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 /* ----------  WRITE helpers (leader)  ---------- */
@@ -271,7 +301,11 @@ func (c *client) SetProp(p types.SetPropPayload) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseSetPropResp(resp.Status, resp.Fields)
+	err = command.ParseSetPropResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
@@ -291,7 +325,11 @@ func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseSetRoomPkgResp(resp.Status, resp.Fields)
+	err = command.ParseSetRoomPkgResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
@@ -311,7 +349,11 @@ func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 		return 0, types.RzError(err)
 	}
 
-	return command.ParseSetRoomAvlResp(resp.Status, resp.Fields)
+	result, err := command.ParseSetRoomAvlResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
@@ -331,7 +373,11 @@ func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 		return 0, types.RzError(err)
 	}
 
-	return command.ParseIncRoomAvlResp(resp.Status, resp.Fields)
+	result, err := command.ParseIncRoomAvlResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
@@ -351,12 +397,16 @@ func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 		return 0, types.RzError(err)
 	}
 
-	return command.ParseDecRoomAvlResp(resp.Status, resp.Fields)
+	result, err := command.ParseDecRoomAvlResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }
 
 func (c *client) DelProp(propertyID string) error {
 	if strings.TrimSpace(propertyID) == "" {
-		return fmt.Errorf("VALIDATION_ERROR: propertyID is required")
+		return types.RzError("VALIDATION_ERROR: propertyID is required")
 	}
 	req, err := command.BuildDelPropPayload(propertyID)
 	if err != nil {
@@ -371,12 +421,16 @@ func (c *client) DelProp(propertyID string) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseDelPropResp(resp.Status, resp.Fields)
+	err = command.ParseDelPropResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 func (c *client) DelSegment(segment string) error {
 	if strings.TrimSpace(segment) == "" {
-		return fmt.Errorf("VALIDATION_ERROR: segment is required")
+		return types.RzError("VALIDATION_ERROR: segment is required")
 	}
 	req, err := command.BuildDelSegmentPayload(segment)
 	if err != nil {
@@ -391,7 +445,11 @@ func (c *client) DelSegment(segment string) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseDelSegmentResp(resp.Status, resp.Fields)
+	err = command.ParseDelSegmentResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 func (c *client) DelPropDay(p types.DelPropDayRequest) error {
@@ -411,7 +469,11 @@ func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseDelPropDayResp(resp.Status, resp.Fields)
+	err = command.ParseDelPropDayResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
@@ -431,7 +493,11 @@ func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseDelPropRoomResp(resp.Status, resp.Fields)
+	err = command.ParseDelPropRoomResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
@@ -451,7 +517,11 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 		return types.RzError(err)
 	}
 
-	return command.ParseDelRoomDayResp(resp.Status, resp.Fields)
+	err = command.ParseDelRoomDayResp(resp.Status, resp.Fields)
+	if err != nil {
+		return types.RzError(err)
+	}
+	return nil
 }
 
 /* ----------  MISC  ---------- */
@@ -469,5 +539,9 @@ func (c *client) GetSegments() ([]types.SegmentInfo, error) {
 		return nil, types.RzError(err)
 	}
 
-	return command.ParseGetSegmentsResp(resp.Status, resp.Fields)
+	result, err := command.ParseGetSegmentsResp(resp.Status, resp.Fields)
+	if err != nil {
+		return result, types.RzError(err)
+	}
+	return result, nil
 }

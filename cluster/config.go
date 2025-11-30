@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"time"
+
+	"github.com/roomzin/roomzin-go/types"
 )
 
 type ClusterConfig struct {
@@ -62,7 +64,7 @@ func (b *ClusterConfigBuilder) WithKeepAlive(d time.Duration) *ClusterConfigBuil
 
 func (b *ClusterConfigBuilder) Build() (ClusterConfig, error) {
 	if err := b.validate(); err != nil {
-		return ClusterConfig{}, err
+		return ClusterConfig{}, types.RzError(err, types.KindClient)
 	}
 	return b.config, nil
 }
@@ -81,5 +83,8 @@ func (b *ClusterConfigBuilder) validate() error {
 	if b.config.AuthToken == "" {
 		errs = append(errs, errors.New("authentication requires a token"))
 	}
-	return errors.Join(errs...)
+	if len(errs) == 0 {
+		return nil
+	}
+	return types.RzError(errors.Join(errs...), types.KindClient)
 }

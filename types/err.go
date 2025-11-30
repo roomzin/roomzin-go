@@ -17,14 +17,14 @@ const (
 	KindRetry                     // 429, 503, 308, role change …
 )
 
-// Error satisfies error and gives access to the kind.
-type Error struct {
+// RoomzinError satisfies error and gives access to the kind.
+type RoomzinError struct {
 	Kind ErrorKind
 	Code string // original code, e.g. "AUTH_ERROR"
 	Msg  string // human message without prefix
 }
 
-func (e *Error) Error() string { return fmt.Sprintf("%s:%s", e.Code, e.Msg) }
+func (e *RoomzinError) Error() string { return fmt.Sprintf("%s:%s", e.Code, e.Msg) }
 
 // ---------- helpers for users ----------
 
@@ -34,8 +34,8 @@ func IsInternal(err error) bool { return isKind(err, KindInternal) }
 func IsCluster(err error) bool  { return isKind(err, KindRetry) }
 
 // errors.Is support
-func (e *Error) Is(target error) bool {
-	t, ok := target.(*Error)
+func (e *RoomzinError) Is(target error) bool {
+	t, ok := target.(*RoomzinError)
 	return ok && t.Kind == e.Kind && t.Code == e.Code
 }
 
@@ -48,24 +48,31 @@ func (e *Error) Is(target error) bool {
 // and always returns *Error.
 // RzError turns anything into *Error.
 // If the caller already knows the bucket, pass it; otherwise we guess.
-func RzError(in any, kind ...ErrorKind) *Error {
+func RzError(in any, kind ...ErrorKind) *RoomzinError {
 	if in == nil {
 		return nil
 	}
 
 	// 1. already wrapped?
-	var e *Error
+	var e *RoomzinError
 	if errors.As(anyToError(in), &e) {
 		return e
 	}
 
 	// 2. explicit bucket?
 	if len(kind) > 0 {
-		return &Error{
+		return &RoomzinError{
 			Kind: kind[0],
 			Code: codeOf(kind[0]),
 			Msg:  extractMsg(in),
 		}
+	}
+
+	// 3. error?
+	if err, ok := in.(error); ok {
+		s := err.Error()
+		code, msg, _ := strings.Cut(s, ":")
+		return classify(code, msg)
 	}
 
 	// 3. server string?
@@ -74,12 +81,7 @@ func RzError(in any, kind ...ErrorKind) *Error {
 		return classify(code, msg)
 	}
 
-	// 4. default → internal
-	return &Error{
-		Kind: KindInternal,
-		Code: "INTERNAL_ERROR",
-		Msg:  extractMsg(in),
-	}
+	return &RoomzinError{Kind: KindInternal, Code: codeOf(KindInternal), Msg: fmt.Sprint(in)}
 }
 
 // ---------- helper ----------
@@ -115,21 +117,21 @@ func anyToError(v any) error {
 	}
 }
 
-func classify(code, msg string) *Error {
+func classify(code, msg string) *RoomzinError {
 	switch code {
 	case "AUTH_ERROR":
-		return &Error{Kind: KindClient, Code: code, Msg: msg}
+		return &RoomzinError{Kind: KindClient, Code: code, Msg: msg}
 	case "VALIDATION_ERROR", "NOT_FOUND", "OVERFLOW", "UNDERFLOW", "FORBIDDEN":
-		return &Error{Kind: KindRequest, Code: code, Msg: msg}
+		return &RoomzinError{Kind: KindRequest, Code: code, Msg: msg}
 	case "503", "429", "308", "405":
-		return &Error{Kind: KindRetry, Code: code, Msg: msg}
+		return &RoomzinError{Kind: KindRetry, Code: code, Msg: msg}
 	default:
 		// "PARSE_ERROR" , "RESPONSE_ERROR"
-		return &Error{Kind: KindInternal, Code: code, Msg: msg}
+		return &RoomzinError{Kind: KindInternal, Code: code, Msg: msg}
 	}
 }
 
 func isKind(err error, want ErrorKind) bool {
-	var e *Error
+	var e *RoomzinError
 	return errors.As(err, &e) && e.Kind == want
 }
