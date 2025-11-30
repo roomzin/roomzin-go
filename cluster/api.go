@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,7 +22,7 @@ type client struct {
 
 func New(cfg *ClusterConfig) (api.CacheClientAPI, error) {
 	if cfg == nil {
-		return nil, errors.New("cfg must not be nil")
+		return nil, types.RzError("cfg must not be nil", types.KindClient)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -57,7 +56,7 @@ func New(cfg *ClusterConfig) (api.CacheClientAPI, error) {
 	var err error
 	c.codecs, err = c.fetchCodecs()
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	return c, nil
@@ -74,7 +73,7 @@ func (c *client) getCodecs() *types.Codecs {
 func (c *client) fetchCodecs() (*types.Codecs, error) {
 	req, err := command.BuildGetCodecsPayload()
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -82,7 +81,7 @@ func (c *client) fetchCodecs() (*types.Codecs, error) {
 
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	return command.ParseGetCodecsResp(resp.Status, resp.Fields)
@@ -106,7 +105,7 @@ func (c *client) GetCodecs() (*types.Codecs, error) {
 	var err error
 	c.codecs, err = c.fetchCodecs()
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 	return c.codecs, nil
 }
@@ -114,11 +113,11 @@ func (c *client) GetCodecs() (*types.Codecs, error) {
 /* ----------  READ helpers (follower)  ---------- */
 func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 	if err := p.Verify(c.getCodecs()); err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 	req, err := command.BuildSearchPropPayload(p)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -126,7 +125,7 @@ func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	return command.ParseSearchPropResp(resp.Status, resp.Fields)
@@ -134,11 +133,11 @@ func (c *client) SearchProp(p types.SearchPropPayload) ([]string, error) {
 
 func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail, error) {
 	if err := p.Verify(c.getCodecs()); err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 	req, err := command.BuildSearchAvailPayload(p)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -146,7 +145,7 @@ func (c *client) SearchAvail(p types.SearchAvailPayload) ([]types.PropertyAvail,
 
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	result, err := command.ParseSearchAvailResp(c.getCodecs(), resp.Status, resp.Fields)
@@ -199,7 +198,7 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 	}
 	req, err := command.BuildPropRoomListPayload(propertyID)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -207,7 +206,7 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	return command.ParsePropRoomListResp(resp.Status, resp.Fields)
@@ -215,11 +214,11 @@ func (c *client) PropRoomList(propertyID string) ([]string, error) {
 
 func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, error) {
 	if err := p.Verify(); err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 	req, err := command.BuildPropRoomDateListPayload(p)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -227,7 +226,7 @@ func (c *client) PropRoomDateList(p types.PropRoomDateListPayload) ([]string, er
 
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	return command.ParsePropRoomDateListResp(resp.Status, resp.Fields)
@@ -257,11 +256,11 @@ func (c *client) GetPropRoomDay(p types.GetRoomDayRequest) (types.GetRoomDayResu
 
 func (c *client) SetProp(p types.SetPropPayload) error {
 	if err := p.Verify(c.getCodecs()); err != nil {
-		return err
+		return types.RzError(err)
 	}
 	req, err := command.BuildSetPropPayload(p)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -269,7 +268,7 @@ func (c *client) SetProp(p types.SetPropPayload) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseSetPropResp(resp.Status, resp.Fields)
@@ -277,11 +276,11 @@ func (c *client) SetProp(p types.SetPropPayload) error {
 
 func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 	if err := p.Verify(c.getCodecs()); err != nil {
-		return err
+		return types.RzError(err)
 	}
 	req, err := command.BuildSetRoomPkgPayload(p)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -289,7 +288,7 @@ func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseSetRoomPkgResp(resp.Status, resp.Fields)
@@ -297,11 +296,11 @@ func (c *client) SetRoomPkg(p types.SetRoomPkgPayload) error {
 
 func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if err := p.Verify(); err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 	req, err := command.BuildSetRoomAvlPayload(p)
 	if err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -309,7 +308,7 @@ func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 
 	return command.ParseSetRoomAvlResp(resp.Status, resp.Fields)
@@ -317,11 +316,11 @@ func (c *client) SetRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if err := p.Verify(); err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 	req, err := command.BuildIncRoomAvlPayload(p)
 	if err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -329,7 +328,7 @@ func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 
 	return command.ParseIncRoomAvlResp(resp.Status, resp.Fields)
@@ -337,11 +336,11 @@ func (c *client) IncRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 	if err := p.Verify(); err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 	req, err := command.BuildDecRoomAvlPayload(p)
 	if err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -349,7 +348,7 @@ func (c *client) DecRoomAvl(p types.UpdRoomAvlPayload) (uint8, error) {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return 0, err
+		return 0, types.RzError(err)
 	}
 
 	return command.ParseDecRoomAvlResp(resp.Status, resp.Fields)
@@ -361,7 +360,7 @@ func (c *client) DelProp(propertyID string) error {
 	}
 	req, err := command.BuildDelPropPayload(propertyID)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -369,7 +368,7 @@ func (c *client) DelProp(propertyID string) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseDelPropResp(resp.Status, resp.Fields)
@@ -381,7 +380,7 @@ func (c *client) DelSegment(segment string) error {
 	}
 	req, err := command.BuildDelSegmentPayload(segment)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -389,7 +388,7 @@ func (c *client) DelSegment(segment string) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseDelSegmentResp(resp.Status, resp.Fields)
@@ -397,11 +396,11 @@ func (c *client) DelSegment(segment string) error {
 
 func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 	if err := p.Verify(); err != nil {
-		return err
+		return types.RzError(err)
 	}
 	req, err := command.BuildDelPropDayPayload(p)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -409,7 +408,7 @@ func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseDelPropDayResp(resp.Status, resp.Fields)
@@ -417,11 +416,11 @@ func (c *client) DelPropDay(p types.DelPropDayRequest) error {
 
 func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 	if err := p.Verify(); err != nil {
-		return err
+		return types.RzError(err)
 	}
 	req, err := command.BuildDelPropRoomPayload(p)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -429,7 +428,7 @@ func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseDelPropRoomResp(resp.Status, resp.Fields)
@@ -437,11 +436,11 @@ func (c *client) DelPropRoom(p types.DelPropRoomPayload) error {
 
 func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 	if err := p.Verify(); err != nil {
-		return err
+		return types.RzError(err)
 	}
 	req, err := command.BuildDelRoomDayPayload(p)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -449,7 +448,7 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 
 	resp, err := c.handler.Execute(ctx, true, req)
 	if err != nil {
-		return err
+		return types.RzError(err)
 	}
 
 	return command.ParseDelRoomDayResp(resp.Status, resp.Fields)
@@ -459,7 +458,7 @@ func (c *client) DelRoomDay(p types.DelRoomDayRequest) error {
 func (c *client) GetSegments() ([]types.SegmentInfo, error) {
 	req, err := command.BuildGetSegmentsPayload()
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	ctx, cancel := context.WithTimeout(c.ctx, c.cfg.Timeout)
@@ -467,7 +466,7 @@ func (c *client) GetSegments() ([]types.SegmentInfo, error) {
 
 	resp, err := c.handler.Execute(ctx, false, req)
 	if err != nil {
-		return nil, err
+		return nil, types.RzError(err)
 	}
 
 	return command.ParseGetSegmentsResp(resp.Status, resp.Fields)
