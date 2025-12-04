@@ -125,6 +125,12 @@ type PropRoomExistPayload struct {
 
 // Verify validates the PropRoomExistPayload.
 func (p PropRoomExistPayload) Verify() error {
+	if p.PropertyID == "" {
+		return errors.New("VALIDATION_ERROR: propertyID is required")
+	}
+	if p.RoomType == "" {
+		return errors.New("VALIDATION_ERROR: RoomType is required")
+	}
 	return nil
 }
 
@@ -136,6 +142,12 @@ type DelPropRoomPayload struct {
 
 // Verify validates the DelPropRoomPayload.
 func (p DelPropRoomPayload) Verify() error {
+	if p.PropertyID == "" {
+		return errors.New("VALIDATION_ERROR: propertyID is required")
+	}
+	if p.RoomType == "" {
+		return errors.New("VALIDATION_ERROR: RoomType is required")
+	}
 	return nil
 }
 
@@ -147,6 +159,12 @@ type PropRoomDateListPayload struct {
 
 // Verify validates the PropRoomDateListPayload.
 func (p PropRoomDateListPayload) Verify() error {
+	if p.PropertyID == "" {
+		return errors.New("VALIDATION_ERROR: propertyID is required")
+	}
+	if p.RoomType == "" {
+		return errors.New("VALIDATION_ERROR: RoomType is required")
+	}
 	return nil
 }
 
@@ -159,6 +177,12 @@ type DelRoomDayRequest struct {
 
 // Verify validates the DelRoomDayRequest.
 func (p DelRoomDayRequest) Verify() error {
+	if p.PropertyID == "" {
+		return errors.New("VALIDATION_ERROR: propertyID is required")
+	}
+	if p.RoomType == "" {
+		return errors.New("VALIDATION_ERROR: RoomType is required")
+	}
 	err := ValidateDate(p.Date)
 	if err != nil {
 		return errors.New("VALIDATION_ERROR: " + err.Error())
@@ -245,6 +269,12 @@ type GetRoomDayRequest struct {
 
 // Verify validates the GetRoomDayRequest.
 func (p GetRoomDayRequest) Verify() error {
+	if p.PropertyID == "" {
+		return errors.New("VALIDATION_ERROR: propertyID is required")
+	}
+	if p.RoomType == "" {
+		return errors.New("VALIDATION_ERROR: RoomType is required")
+	}
 	err := ValidateDate(p.Date)
 	if err != nil {
 		return errors.New("VALIDATION_ERROR: " + err.Error())
