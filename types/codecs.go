@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"slices"
 	"strings"
 )
 
@@ -15,14 +16,7 @@ type Codecs struct {
 func ValidateAmenities(codecs *Codecs, input []string) error {
 	var invalid []string
 	for _, amenity := range input {
-		found := false
-		for _, valid := range codecs.Amenities {
-			if amenity == valid {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(codecs.Amenities, amenity) {
 			invalid = append(invalid, amenity)
 		}
 	}
@@ -35,14 +29,7 @@ func ValidateAmenities(codecs *Codecs, input []string) error {
 func ValidateRateCancels(codecs *Codecs, input []string) error {
 	var invalid []string
 	for _, rate := range input {
-		found := false
-		for _, valid := range codecs.RateCancels {
-			if rate == valid {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(codecs.RateCancels, rate) {
 			invalid = append(invalid, rate)
 		}
 	}
