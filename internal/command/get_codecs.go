@@ -32,7 +32,7 @@ func ParseGetCodecsResp(status string, fields []protocol.Field) (*types.Codecs, 
 		return nil, fmt.Errorf("unknown error")
 	}
 
-	// GETCODECS response should have exactly 1 field with type 0x09 (YAML/raw bytes)
+	// GETCODECS response should have exactly 1 field with type 0x09
 	if len(fields) != 1 {
 		return nil, fmt.Errorf("invalid field count: expected 1 field, got %d", len(fields))
 	}
@@ -42,40 +42,10 @@ func ParseGetCodecsResp(status string, fields []protocol.Field) (*types.Codecs, 
 		return nil, fmt.Errorf("expected YAML field type 0x09, got type %d", field.FieldType)
 	}
 
-	// Parse the YAML data into Codecs struct
-	codecs, err := parseCodecsFromDelimited(field.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse YAML data: %w", err)
-	}
-
-	return codecs, nil
-}
-
-func parseCodecsFromDelimited(data []byte) (*types.Codecs, error) {
-	parts := strings.Split(string(data), "|")
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid codecs format: expected 2 parts, got %d", len(parts))
-	}
-
-	amenities := strings.Split(parts[0], ",")
-	rateCancels := strings.Split(parts[1], ",")
-
-	// Filter out empty strings from empty lists
-	amenities = filterEmpty(amenities)
-	rateCancels = filterEmpty(rateCancels)
+	rateCancels := strings.Split(string(field.Data), ",")
 
 	return &types.Codecs{
-		Amenities:   amenities,
 		RateCancels: rateCancels,
 	}, nil
-}
 
-func filterEmpty(items []string) []string {
-	result := make([]string, 0, len(items))
-	for _, item := range items {
-		if item != "" {
-			result = append(result, item)
-		}
-	}
-	return result
 }

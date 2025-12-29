@@ -105,11 +105,6 @@ func (p SetPropPayload) Verify(codecs *Codecs) error {
 	if p.Longitude < -180 || p.Longitude > 180 {
 		errs = append(errs, "longitude must be between -180 and 180")
 	}
-	if len(p.Amenities) > 0 {
-		if err := ValidateAmenities(codecs, p.Amenities); err != nil {
-			errs = append(errs, err.Error())
-		}
-	}
 
 	if len(errs) > 0 {
 		return errors.New("VALIDATION_ERROR: " + strings.Join(errs, "; "))
@@ -308,11 +303,6 @@ func (p SearchPropPayload) Verify(codecs *Codecs) error {
 	}
 	if p.Longitude != nil && (*p.Longitude < -180 || *p.Longitude > 180) {
 		errs = append(errs, "longitude must be between -180 and 180")
-	}
-	if p.Amenities != nil {
-		if err := ValidateAmenities(codecs, *p.Amenities); err != nil {
-			errs = append(errs, err.Error())
-		}
 	}
 
 	if len(errs) > 0 {

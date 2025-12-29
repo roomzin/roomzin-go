@@ -136,7 +136,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 				propID, numDays, daysCount)
 		}
 
-		expectedDataLen := 2 + (8 * int(daysCount))
+		expectedDataLen := 2 + (11 * int(daysCount))
 		if len(data) != expectedDataLen {
 			return nil, fmt.Errorf("RESPONSE_ERROR: property %q days vector length mismatch: expected %d, got %d",
 				propID, expectedDataLen, len(data))
@@ -146,7 +146,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 		dataCursor := 2
 
 		for d := 0; d < int(daysCount); d++ {
-			if dataCursor+8 > len(data) {
+			if dataCursor+11 > len(data) {
 				return nil, fmt.Errorf("RESPONSE_ERROR: property %q day %d data truncated", propID, d)
 			}
 
@@ -159,8 +159,8 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 			finalPrice := binary.LittleEndian.Uint32(data[dataCursor : dataCursor+4])
 			dataCursor += 4
 
-			rateCancel := data[dataCursor]
-			dataCursor += 1
+			rateCancel := binary.LittleEndian.Uint32(data[dataCursor : dataCursor+4])
+			dataCursor += 4
 
 			dateStr, err := protocol.U16ToDate(datePacked)
 			if err != nil {
