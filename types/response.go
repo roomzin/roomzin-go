@@ -6,7 +6,7 @@ type GetRoomDayResult struct {
 	Date         string
 	Availability uint8
 	FinalPrice   uint32
-	RateCancel   []string
+	RateFeature  []string
 }
 
 // DayAvail one day inside a property.
@@ -14,7 +14,7 @@ type DayAvail struct {
 	Date         string
 	Availability uint8
 	FinalPrice   uint32
-	RateCancel   []string
+	RateFeature  []string
 }
 
 // PropertyAvail one property + all its days.

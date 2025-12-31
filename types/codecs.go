@@ -9,18 +9,18 @@ import (
 type Status string
 
 type Codecs struct {
-	RateCancels []string `yaml:"rate_cancels"`
+	RateFeatures []string `yaml:"rate_features"`
 }
 
-func ValidateRateCancels(codecs *Codecs, input []string) error {
+func ValidateRateFeatures(codecs *Codecs, input []string) error {
 	var invalid []string
 	for _, rate := range input {
-		if !slices.Contains(codecs.RateCancels, rate) {
+		if !slices.Contains(codecs.RateFeatures, rate) {
 			invalid = append(invalid, rate)
 		}
 	}
 	if len(invalid) > 0 {
-		return errors.New("Invalid rate cancels: " + strings.Join(invalid, ", "))
+		return errors.New("Invalid rate features: " + strings.Join(invalid, ", "))
 	}
 	return nil
 }

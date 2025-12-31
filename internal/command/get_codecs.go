@@ -42,10 +42,10 @@ func ParseGetCodecsResp(status string, fields []protocol.Field) (*types.Codecs, 
 		return nil, fmt.Errorf("expected YAML field type 0x09, got type %d", field.FieldType)
 	}
 
-	rateCancels := strings.Split(string(field.Data), ",")
+	rateFeatures := strings.Split(string(field.Data), ",")
 
 	return &types.Codecs{
-		RateCancels: rateCancels,
+		RateFeatures: rateFeatures,
 	}, nil
 
 }

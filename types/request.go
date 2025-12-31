@@ -217,14 +217,14 @@ func (p UpdRoomAvlPayload) Verify() error {
 	return nil
 }
 
-// SetRoomPkgPayload defines the payload for setting room availability, pricing, and cancellation policy (SETROOMPKG command).
+// SetRoomPkgPayload defines the payload for setting room availability, pricing, and rate features (SETROOMPKG command).
 type SetRoomPkgPayload struct {
 	PropertyID   string
 	RoomType     string
 	Date         string // YYYY-MM-DD
 	Availability *uint8
 	FinalPrice   *uint32
-	RateCancel   []string // Optional; empty slice if not provided
+	RateFeature  []string // Optional; empty slice if not provided
 }
 
 func (p SetRoomPkgPayload) Verify(codecs *Codecs) error {
@@ -242,8 +242,8 @@ func (p SetRoomPkgPayload) Verify(codecs *Codecs) error {
 		errs = append(errs, dateErr.Error())
 	}
 
-	if len(p.RateCancel) > 0 {
-		err := ValidateRateCancels(codecs, p.RateCancel)
+	if len(p.RateFeature) > 0 {
+		err := ValidateRateFeatures(codecs, p.RateFeature)
 		if err != nil {
 			errs = append(errs, err.Error())
 		}
@@ -325,7 +325,7 @@ type SearchAvailPayload struct {
 	Date         []string
 	Availability *uint8
 	FinalPrice   *uint32
-	RateCancel   []string
+	RateFeature  []string
 	Limit        *uint64
 }
 
@@ -355,8 +355,8 @@ func (p SearchAvailPayload) Verify(codecs *Codecs) error {
 			errs = append(errs, err.Error())
 		}
 	}
-	if len(p.RateCancel) > 0 {
-		if err := ValidateRateCancels(codecs, p.RateCancel); err != nil {
+	if len(p.RateFeature) > 0 {
+		if err := ValidateRateFeatures(codecs, p.RateFeature); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

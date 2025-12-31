@@ -42,8 +42,8 @@ func BuildSetRoomPkgPayload(p types.SetRoomPkgPayload) ([]byte, error) {
 		binary.LittleEndian.PutUint32(b, uint32(*p.FinalPrice))
 		fields = append(fields, fld{0x05, 0x03, b})
 	}
-	if p.RateCancel != nil {
-		fields = append(fields, fld{0x06, 0x01, []byte(strings.Join(p.RateCancel, ","))})
+	if p.RateFeature != nil {
+		fields = append(fields, fld{0x06, 0x01, []byte(strings.Join(p.RateFeature, ","))})
 	}
 
 	// field count

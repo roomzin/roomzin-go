@@ -67,8 +67,8 @@ func BuildSearchAvailPayload(p types.SearchAvailPayload) ([]byte, error) {
 	if v := p.FinalPrice; v != nil {
 		fields = append(fields, fld{0x0D, 0x03, protocol.MakeU32(*v)})
 	}
-	if len(p.RateCancel) > 0 {
-		fields = append(fields, fld{0x0E, 0x01, []byte(strings.Join(p.RateCancel, ","))})
+	if len(p.RateFeature) > 0 {
+		fields = append(fields, fld{0x0E, 0x01, []byte(strings.Join(p.RateFeature, ","))})
 	}
 	if v := p.Limit; v != nil {
 		fields = append(fields, fld{0x0F, 0x03, protocol.MakeU64(*v)})
@@ -159,7 +159,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 			finalPrice := binary.LittleEndian.Uint32(data[dataCursor : dataCursor+4])
 			dataCursor += 4
 
-			rateCancel := binary.LittleEndian.Uint32(data[dataCursor : dataCursor+4])
+			rateFeature := binary.LittleEndian.Uint32(data[dataCursor : dataCursor+4])
 			dataCursor += 4
 
 			dateStr, err := protocol.U16ToDate(datePacked)
@@ -171,7 +171,7 @@ func ParseSearchAvailResp(codecs *types.Codecs, status string, fields []protocol
 				Date:         dateStr,
 				Availability: availability,
 				FinalPrice:   finalPrice,
-				RateCancel:   protocol.BitmaskToRateCancelStrings(codecs, rateCancel),
+				RateFeature:  protocol.BitmaskToRateFeatureStrings(codecs, rateFeature),
 			})
 		}
 

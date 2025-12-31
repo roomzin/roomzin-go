@@ -10,16 +10,16 @@ import (
 	"github.com/roomzin/roomzin-go/types"
 )
 
-// / BitmaskToRateCancelStrings converts 24-bit mask → []string (matches Rust bitmask_to_rate_cancel_string)
-func BitmaskToRateCancelStrings(codecs *types.Codecs, mask uint32) []string {
-	if codecs == nil || len(codecs.RateCancels) == 0 {
+// / BitmaskToRateFeatureStrings converts 24-bit mask → []string (matches Rust bitmask_to_rate_feature_string)
+func BitmaskToRateFeatureStrings(codecs *types.Codecs, mask uint32) []string {
+	if codecs == nil || len(codecs.RateFeatures) == 0 {
 		return []string{}
 	}
 
 	out := make([]string, 0, 24) // pre-allocate up to 24
-	for i := 0; i < 24 && i < len(codecs.RateCancels); i++ {
+	for i := 0; i < 24 && i < len(codecs.RateFeatures); i++ {
 		if mask&(1<<uint(i)) != 0 {
-			out = append(out, codecs.RateCancels[i])
+			out = append(out, codecs.RateFeatures[i])
 		}
 	}
 	return out

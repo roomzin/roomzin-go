@@ -49,7 +49,7 @@ func ParseGetPropRoomDayResp(codecs *types.Codecs, status string, fields []proto
 			Date:         string(chunk[1].Data),
 			Availability: chunk[2].Data[0],
 			FinalPrice:   binary.LittleEndian.Uint32(chunk[3].Data),
-			RateCancel:   protocol.BitmaskToRateCancelStrings(codecs, binary.LittleEndian.Uint32(chunk[4].Data)),
+			RateFeature:  protocol.BitmaskToRateFeatureStrings(codecs, binary.LittleEndian.Uint32(chunk[4].Data)),
 		}, nil
 	}
 	if len(fields) > 0 && fields[0].FieldType == 0x01 {
