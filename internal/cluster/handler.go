@@ -52,9 +52,10 @@ type leaderHandler struct {
 type followersHandler struct {
 	cfg         *Config
 	reqChan     chan *request
-	connections map[string]*connection
+	connections []*connection
 	connMutex   sync.RWMutex
 	clrID       uint32
+	rrIndex     atomic.Uint32
 }
 
 type demuxMap struct {
@@ -78,7 +79,7 @@ func NewHandler(cfg *Config) *Handler {
 		followersHandler: &followersHandler{
 			cfg:         cfg,
 			reqChan:     make(chan *request, 1024),
-			connections: make(map[string]*connection),
+			connections: make([]*connection, 0),
 		},
 		respChanPool: &sync.Pool{
 			New: func() any { return make(chan protocol.RawResult, 1) },
@@ -154,15 +155,13 @@ func (m *demuxMap) Cleanup(maxAge time.Duration) {
 // ========================================================
 
 type connection struct {
-	netConn    net.Conn
-	demuxMap   *demuxMap
-	sendQueue  chan []byte
-	closer     sync.Once
-	cfg        *Config
-	addr       string
-	latency    atomic.Int64    // latest latency
-	avgLatency *RollingAverage // moving average of last N samples
-	closed     atomic.Bool
+	netConn   net.Conn
+	demuxMap  *demuxMap
+	sendQueue chan []byte
+	closer    sync.Once
+	cfg       *Config
+	addr      string
+	closed    atomic.Bool
 }
 
 func newConnection(addr string, cfg *Config, dm *demuxMap) (*connection, error) {
@@ -200,15 +199,13 @@ func newConnection(addr string, cfg *Config, dm *demuxMap) (*connection, error) 
 		cfg:       cfg,
 		addr:      addr,
 	}
-	c.latency.Store(0)
-	c.avgLatency = NewRollingAverage(100)
 
 	return c, nil
 }
 
-func (c *connection) activate(scored bool) {
+func (c *connection) activate() {
 	go c.writeLoop()
-	go c.readLoop(scored)
+	go c.readLoop()
 }
 
 func (c *connection) writeLoop() {
@@ -222,7 +219,7 @@ func (c *connection) writeLoop() {
 }
 
 // scoring is used for followers
-func (c *connection) readLoop(scored bool) {
+func (c *connection) readLoop() {
 	for {
 		hdr, payload, err := protocol.DrainFrame(c.netConn)
 		if err != nil {
@@ -230,16 +227,10 @@ func (c *connection) readLoop(scored bool) {
 			return
 		}
 
-		ch, start, ok := c.demuxMap.LoadRemove(hdr.ClrID)
+		ch, _, ok := c.demuxMap.LoadRemove(hdr.ClrID)
 		if !ok {
 			c.Close()
 			return
-		}
-
-		if scored {
-			latency := time.Since(start)
-			c.latency.Store(int64(latency))
-			c.avgLatency.Add(latency)
 		}
 
 		fields, err := protocol.ParseFields(
@@ -261,18 +252,9 @@ func (c *connection) readLoop(scored bool) {
 				c.Close() // force followerHandler to remove the connection from its list
 
 			case "503": // unavailable
-				if scored {
-					// penalize latency
-					c.avgLatency.Add(c.avgLatency.GetAverage() * 2)
-				} else {
-					c.Close() // leader unavailable, drop to trigger resync
-				}
+				c.Close() // leader unavailable, drop to trigger resync
 
 			case "429": // busy
-				if scored {
-					// softer penalty
-					c.avgLatency.Add(time.Millisecond * 50)
-				}
 			}
 		}
 
@@ -340,7 +322,7 @@ func (lh *leaderHandler) reconnectLeader() {
 	}
 
 	lh.updateConnection(conn)
-	conn.activate(false)
+	conn.activate()
 
 	time.Sleep(10 * time.Millisecond) // Give goroutines time to start
 }
@@ -407,97 +389,24 @@ func (lh *leaderHandler) LeaderSendWorker(ctx context.Context) {
 	}
 }
 
-// ========================================================
-//   followersHandler – uses scoring & rebuilds pool
-// ========================================================
-
-// RollingAverage tracks a moving average of the last N samples
-type RollingAverage struct {
-	samples    []atomic.Int64 // Circular buffer of samples
-	sum        atomic.Int64   // Current sum of the window
-	index      atomic.Int32   // Current position in circular buffer
-	count      atomic.Int32   // Current number of samples (until window is full)
-	windowSize int32          // Fixed size of the window
-}
-
-func NewRollingAverage(windowSize int) *RollingAverage {
-	return &RollingAverage{
-		samples:    make([]atomic.Int64, windowSize),
-		windowSize: int32(windowSize),
-	}
-}
-
-func (r *RollingAverage) Add(latency time.Duration) {
-	idx := r.index.Load()
-	oldSample := r.samples[idx].Load()
-
-	// Atomically update the sum: newValue - oldValue + currentSum
-	newVal := int64(latency)
-	r.sum.Add(newVal - oldSample)
-
-	// Store new value and move index
-	r.samples[idx].Store(newVal)
-	nextIdx := (idx + 1) % r.windowSize
-	r.index.Store(nextIdx)
-
-	// Update count until window is full
-	if r.count.Load() < r.windowSize {
-		r.count.Add(1)
-	}
-}
-
-func (r *RollingAverage) GetAverage() time.Duration {
-	count := r.count.Load()
-	if count == 0 {
-		return 0
-	}
-	sum := r.sum.Load()
-	return time.Duration(sum / int64(count))
-}
-
-func (fh *followersHandler) getBestConnection() (*connection, error) {
+func (fh *followersHandler) nextFollowerConnection() (*connection, error) {
 	fh.connMutex.RLock()
 	defer fh.connMutex.RUnlock()
 
-	if len(fh.connections) == 0 {
+	total := len(fh.connections)
+	if total == 0 {
 		return nil, errors.New("no follower connections available")
 	}
 
-	var best *connection
-	var bestAvgLatency time.Duration
-	hasLatencyData := false
+	// Try each connection once
+	for range total {
+		idx := fh.rrIndex.Add(1) % uint32(total)
+		conn := fh.connections[idx]
 
-	// First pass: try to find connection with latency data
-	for _, conn := range fh.connections {
-		if conn == nil || conn.netConn == nil || conn.sendQueue == nil {
-			continue
+		if conn != nil && !conn.IsClosed() && conn.netConn != nil {
+			return conn, nil
 		}
-
-		avgLatency := conn.avgLatency.GetAverage()
-		if avgLatency == 0 {
-			continue // Skip if no latency data yet
-		}
-
-		hasLatencyData = true
-		if best == nil || avgLatency < bestAvgLatency {
-			best = conn
-			bestAvgLatency = avgLatency
-		}
-	}
-
-	// If we found connections with latency data, return the best one
-	if hasLatencyData {
-		return best, nil
-	}
-
-	// Second pass: if no latency data yet, return any valid connection
-	for _, conn := range fh.connections {
-		if conn == nil || conn.netConn == nil || conn.sendQueue == nil {
-			continue
-		}
-
-		// Return the first valid connection
-		return conn, nil
+		// Connection unhealthy, try next one
 	}
 
 	return nil, errors.New("no valid follower connection found")
@@ -512,7 +421,7 @@ func (fh *followersHandler) FollowerSendWroker(ctx context.Context) {
 			var conn *connection
 			var err error
 			for {
-				conn, err = fh.getBestConnection()
+				conn, err = fh.nextFollowerConnection()
 				if err == nil && conn != nil && conn.netConn != nil && conn.sendQueue != nil {
 					break
 				}
@@ -535,23 +444,31 @@ func (fh *followersHandler) reconnectFollower(addr string) {
 	fh.connMutex.Lock()
 	defer fh.connMutex.Unlock()
 
-	if con, ok := fh.connections[addr]; ok && con != nil && !con.IsClosed() {
-		return // already connected
+	// cold path is ok to have O(n) in favor of O(1) in load balancer
+	curIdx := -1
+	for idx, con := range fh.connections {
+		if con.addr == addr {
+			if con != nil && !con.IsClosed() {
+				return // already connected
+			}
+			fh.connections[idx].Close()
+			curIdx = idx
+			break
+		}
 	}
 
 	conn, err := newConnection(addr, fh.cfg, &demuxMap{})
-	if err != nil {
-		return
-	}
-	if conn.netConn == nil {
-		return
-	}
-	if conn.sendQueue == nil {
+	if err != nil || conn.netConn == nil || conn.sendQueue == nil {
 		return
 	}
 
-	fh.connections[addr] = conn
-	conn.activate(true)
+	if curIdx != -1 {
+		fh.connections[curIdx] = conn
+	} else {
+		fh.connections = append(fh.connections, conn)
+	}
+
+	conn.activate()
 }
 
 func (fh *followersHandler) syncFollowers() {
